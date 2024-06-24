@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>倉庫番ゲーム</title>
+    <style>
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 30px);
+            gap: 1px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .wall { background-color: #333; }
+        .player { background-color: #00f; }
+        .box { background-color: #f90; }
+        .goal { background-color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>倉庫番ゲーム</h1>
+    <div id="game-board"></div>
+
+    <script>
+        const gameBoard = document.getElementById('game-board');
+        let playerPosition = { x: 1, y: 1 };
+
+        const level = [
+            "########",
+            "#  #   #",
+            "#   $  #",
+            "#  $ # #",
+            "# .  # #",
+            "#  #   #",
+            "#   P  #",
+            "########"
+        ];
+
+        function createBoard() {
+            gameBoard.innerHTML = '';
+            for (let y = 0; y < level.length; y++) {
+                for (let x = 0; x < level[y].length; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    switch (level[y][x]) {
+                        case '#': cell.classList.add('wall'); break;
+                        case 'P': 
+                            cell.classList.add('player');
+                            playerPosition = { x, y };
+                            break;
+                        case '$': cell.classList.add('box'); break;
+                        case '.': cell.classList.add('goal'); break;
+                    }
+                    gameBoard.appendChild(cell);
+                }
+            }
+        }
+
+        createBoard();
+
+        document.addEventListener('keydown', (e) => {
+            let newX = playerPosition.x;
+            let newY = playerPosition.y;
+
+            switch (e.key) {
+                case 'ArrowUp': newY--; break;
+                case 'ArrowDown': newY++; break;
+                case 'ArrowLeft': newX--; break;
+                case 'ArrowRight': newX++; break;
+                default: return;
+            }
+
+            if (level[newY][newX] !== '#') {
+                playerPosition = { x: newX, y: newY };
+                createBoard();
+            }
+        });
+    </script>
+</body>
+</html>
