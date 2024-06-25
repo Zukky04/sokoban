@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>倉庫番ゲーム</title>
     <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
         #game-container {
             position: relative;
             width: 240px;
@@ -48,6 +54,29 @@
             margin-top: 10px;
             font-size: 18px;
         }
+        #controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #eee;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+        }
+        #up-btn { grid-column: 2 / 3; }
+        #left-btn { grid-column: 1 / 2; grid-row: 2 / 3; }
+        #down-btn { grid-column: 2 / 3; grid-row: 2 / 3; }
+        #right-btn { grid-column: 3 / 4; grid-row: 2 / 3; }
     </style>
 </head>
 <body>
@@ -61,6 +90,12 @@
     </div>
     <p>レベル: <span id="level-display">1</span></p>
     <p id="timer">経過時間: 0秒</p>
+    <div id="controls">
+        <div id="up-btn" class="control-btn">↑</div>
+        <div id="left-btn" class="control-btn">←</div>
+        <div id="down-btn" class="control-btn">↓</div>
+        <div id="right-btn" class="control-btn">→</div>
+    </div>
 
     <script>
         const gameBoard = document.getElementById('game-board');
@@ -226,6 +261,7 @@
             clearTime.textContent = `あなたの記録は${elapsedTime}秒`;
             clearMessage.style.display = 'flex';
             document.removeEventListener('keydown', handleKeyDown);
+            removeControlListeners();
         }
 
         function handleKeyDown(e) {
@@ -237,9 +273,24 @@
             }
         }
 
+        function addControlListeners() {
+            document.getElementById('up-btn').addEventListener('click', () => movePlayer(0, -1));
+            document.getElementById('down-btn').addEventListener('click', () => movePlayer(0, 1));
+            document.getElementById('left-btn').addEventListener('click', () => movePlayer(-1, 0));
+            document.getElementById('right-btn').addEventListener('click', () => movePlayer(1, 0));
+        }
+
+        function removeControlListeners() {
+            document.getElementById('up-btn').removeEventListener('click', () => movePlayer(0, -1));
+            document.getElementById('down-btn').removeEventListener('click', () => movePlayer(0, 1));
+            document.getElementById('left-btn').removeEventListener('click', () => movePlayer(-1, 0));
+            document.getElementById('right-btn').removeEventListener('click', () => movePlayer(1, 0));
+        }
+
         createBoard();
         startTimer();
         document.addEventListener('keydown', handleKeyDown);
+        addControlListeners();
     </script>
 </body>
 </html>
