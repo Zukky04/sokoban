@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>倉庫番ゲーム</title>
     <style>
+        #game-container {
+            position: relative;
+            width: 240px;
+            height: 240px;
+        }
         #game-board {
             display: grid;
             grid-template-columns: repeat(8, 30px);
@@ -22,66 +27,219 @@
         .player { background-color: #00f; }
         .box { background-color: #f90; }
         .goal { background-color: #0f0; }
+        .box-on-goal { background-color: #f0f; }
+        #clear-message {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            display: none;
+        }
+        #timer {
+            margin-top: 10px;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
     <h1>倉庫番ゲーム</h1>
-    <div id="game-board"></div>
+    <div id="game-container">
+        <div id="game-board"></div>
+        <div id="clear-message">
+            <div>クリア！おめでとう😊！</div>
+            <div id="clear-time"></div>
+        </div>
+    </div>
+    <p>レベル: <span id="level-display">1</span></p>
+    <p id="timer">経過時間: 0秒</p>
 
     <script>
         const gameBoard = document.getElementById('game-board');
+        const levelDisplay = document.getElementById('level-display');
+        const clearMessage = document.getElementById('clear-message');
+        const clearTime = document.getElementById('clear-time');
+        const timerDisplay = document.getElementById('timer');
         let playerPosition = { x: 1, y: 1 };
+        let boxPositions = [];
+        let currentLevel = 0;
+        let startTime;
+        let timerInterval;
 
-        const level = [
-            "########",
-            "#  #   #",
-            "#   $  #",
-            "#  $ # #",
-            "# .  # #",
-            "#  #   #",
-            "#   P  #",
-            "########"
+        const levels = [
+            [
+                "########",
+                "#  #   #",
+                "#   $  #",
+                "#  $ # #",
+                "# .  # #",
+                "#  #.  #",
+                "#   P  #",
+                "########"
+            ],
+            [
+                "########",
+                "#     .#",
+                "# $#   #",
+                "#. #$  #",
+                "#  #  ##",
+                "#   $  #",
+                "#  .P  #",
+                "########"
+            ],
+            [
+                "########",
+                "#.  #  #",
+                "#   $$ #",
+                "# .#   #",
+                "#  #$  #",
+                "#     .#",
+                "#   P  #",
+                "########"
+            ]
         ];
+
+        let level = levels[currentLevel];
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            timerDisplay.textContent = `経過時間: ${elapsedTime}秒`;
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
 
         function createBoard() {
             gameBoard.innerHTML = '';
+            boxPositions = [];
             for (let y = 0; y < level.length; y++) {
                 for (let x = 0; x < level[y].length; x++) {
                     const cell = document.createElement('div');
                     cell.classList.add('cell');
-                    switch (level[y][x]) {
-                        case '#': cell.classList.add('wall'); break;
-                        case 'P': 
-                            cell.classList.add('player');
-                            playerPosition = { x, y };
-                            break;
-                        case '$': cell.classList.add('box'); break;
-                        case '.': cell.classList.add('goal'); break;
+                    if (x === playerPosition.x && y === playerPosition.y) {
+                        cell.classList.add('player');
+                    } else {
+                        switch (level[y][x]) {
+                            case '#': cell.classList.add('wall'); break;
+                            case '$': 
+                                cell.classList.add('box');
+                                boxPositions.push({ x, y });
+                                break;
+                            case '.': cell.classList.add('goal'); break;
+                            case '*':
+                                cell.classList.add('box-on-goal');
+                                boxPositions.push({ x, y });
+                                break;
+                        }
                     }
                     gameBoard.appendChild(cell);
                 }
             }
+            levelDisplay.textContent = currentLevel + 1;
+        }
+
+        function movePlayer(dx, dy) {
+            const newX = playerPosition.x + dx;
+            const newY = playerPosition.y + dy;
+
+            if (level[newY][newX] === '#') return; // 壁にぶつかる
+
+            const boxIndex = boxPositions.findIndex(box => box.x === newX && box.y === newY);
+            if (boxIndex !== -1) {
+                // 箱を押す
+                const newBoxX = newX + dx;
+                const newBoxY = newY + dy;
+                if (level[newBoxY][newBoxX] === '#' || boxPositions.some(box => box.x === newBoxX && box.y === newBoxY)) return; // 箱が押せない
+
+                // 箱を移動
+                boxPositions[boxIndex] = { x: newBoxX, y: newBoxY };
+                updateLevelString(newBoxX, newBoxY, newX, newY);
+            }
+
+            updateLevelString(newX, newY, playerPosition.x, playerPosition.y);
+            playerPosition = { x: newX, y: newY };
+            createBoard();
+
+            if (checkLevelComplete()) {
+                nextLevel();
+            }
+        }
+
+        function updateLevelString(newX, newY, oldX, oldY) {
+            const isGoal = (x, y) => level[y][x] === '.' || level[y][x] === '*';
+            const row = level[newY].split('');
+            if (newX === playerPosition.x && newY === playerPosition.y) {
+                row[newX] = 'P';
+            } else {
+                row[newX] = isGoal(newX, newY) ? '*' : '$';
+            }
+            level[newY] = row.join('');
+
+            const oldRow = level[oldY].split('');
+            oldRow[oldX] = isGoal(oldX, oldY) ? '.' : ' ';
+            level[oldY] = oldRow.join('');
+        }
+
+        function checkLevelComplete() {
+            return boxPositions.every(box => level[box.y][box.x] === '*');
+        }
+
+        function nextLevel() {
+            currentLevel++;
+            if (currentLevel < levels.length) {
+                level = levels[currentLevel];
+                playerPosition = findPlayerPosition(level);
+                createBoard();
+            } else {
+                showClearMessage();
+            }
+        }
+
+        function findPlayerPosition(level) {
+            for (let y = 0; y < level.length; y++) {
+                for (let x = 0; x < level[y].length; x++) {
+                    if (level[y][x] === 'P') {
+                        return { x, y };
+                    }
+                }
+            }
+            return { x: 1, y: 1 }; // デフォルト位置
+        }
+
+        function showClearMessage() {
+            stopTimer();
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            clearTime.textContent = `あなたの記録は${elapsedTime}秒`;
+            clearMessage.style.display = 'flex';
+            document.removeEventListener('keydown', handleKeyDown);
+        }
+
+        function handleKeyDown(e) {
+            switch (e.key) {
+                case 'ArrowUp': movePlayer(0, -1); break;
+                case 'ArrowDown': movePlayer(0, 1); break;
+                case 'ArrowLeft': movePlayer(-1, 0); break;
+                case 'ArrowRight': movePlayer(1, 0); break;
+            }
         }
 
         createBoard();
-
-        document.addEventListener('keydown', (e) => {
-            let newX = playerPosition.x;
-            let newY = playerPosition.y;
-
-            switch (e.key) {
-                case 'ArrowUp': newY--; break;
-                case 'ArrowDown': newY++; break;
-                case 'ArrowLeft': newX--; break;
-                case 'ArrowRight': newX++; break;
-                default: return;
-            }
-
-            if (level[newY][newX] !== '#') {
-                playerPosition = { x: newX, y: newY };
-                createBoard();
-            }
-        });
+        startTimer();
+        document.addEventListener('keydown', handleKeyDown);
     </script>
 </body>
 </html>
