@@ -10,6 +10,20 @@
             flex-direction: column;
             align-items: center;
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        #opening-page, #game-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+        }
+        #opening-page {
+            text-align: center;
         }
         #game-container {
             position: relative;
@@ -77,27 +91,90 @@
         #left-btn { grid-column: 1 / 2; grid-row: 2 / 3; }
         #down-btn { grid-column: 2 / 3; grid-row: 2 / 3; }
         #right-btn { grid-column: 3 / 4; grid-row: 2 / 3; }
+        #start-btn {
+            font-size: 20px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #start-btn:hover {
+            background-color: #45a049;
+        }
+        .instructions {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .game-elements {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .game-element {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .element-icon {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #000;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>倉庫番ゲーム</h1>
-    <div id="game-container">
-        <div id="game-board"></div>
-        <div id="clear-message">
-            <div>クリア！おめでとう😊！</div>
-            <div id="clear-time"></div>
+    <div id="opening-page">
+        <h1>倉庫番ゲーム</h1>
+        <div class="game-elements">
+            <div class="game-element">
+                <div class="element-icon player"></div>
+                <span>プレイヤー</span>
+            </div>
+            <div class="game-element">
+                <div class="element-icon box"></div>
+                <span>箱</span>
+            </div>
+            <div class="game-element">
+                <div class="element-icon goal"></div>
+                <span>ゴール</span>
+            </div>
         </div>
+        <div class="instructions">
+            <h2>操作方法</h2>
+            <p>・PCの場合: 矢印キーで移動</p>
+            <p>・スマートフォンの場合: 画面下の方向ボタンをタップ</p>
+            <p>・箱を全てゴールに運んでクリア！</p>
+        </div>
+        <button id="start-btn">START</button>
     </div>
-    <p>レベル: <span id="level-display">1</span></p>
-    <p id="timer">経過時間: 0秒</p>
-    <div id="controls">
-        <div id="up-btn" class="control-btn">↑</div>
-        <div id="left-btn" class="control-btn">←</div>
-        <div id="down-btn" class="control-btn">↓</div>
-        <div id="right-btn" class="control-btn">→</div>
+
+    <div id="game-page" style="display: none;">
+        <div id="game-container">
+            <div id="game-board"></div>
+            <div id="clear-message">
+                <div>クリア！おめでとう😊！</div>
+                <div id="clear-time"></div>
+            </div>
+        </div>
+        <p>レベル: <span id="level-display">1</span></p>
+        <p id="timer">経過時間: 0秒</p>
+        <div id="controls">
+            <div id="up-btn" class="control-btn">↑</div>
+            <div id="left-btn" class="control-btn">←</div>
+            <div id="down-btn" class="control-btn">↓</div>
+            <div id="right-btn" class="control-btn">→</div>
+        </div>
     </div>
 
     <script>
+        const openingPage = document.getElementById('opening-page');
+        const gamePage = document.getElementById('game-page');
+        const startBtn = document.getElementById('start-btn');
         const gameBoard = document.getElementById('game-board');
         const levelDisplay = document.getElementById('level-display');
         const clearMessage = document.getElementById('clear-message');
@@ -143,6 +220,17 @@
         ];
 
         let level = levels[currentLevel];
+
+        startBtn.addEventListener('click', startGame);
+
+        function startGame() {
+            openingPage.style.display = 'none';
+            gamePage.style.display = 'flex';
+            createBoard();
+            startTimer();
+            document.addEventListener('keydown', handleKeyDown);
+            addControlListeners();
+        }
 
         function startTimer() {
             startTime = Date.now();
@@ -286,11 +374,6 @@
             document.getElementById('left-btn').removeEventListener('click', () => movePlayer(-1, 0));
             document.getElementById('right-btn').removeEventListener('click', () => movePlayer(1, 0));
         }
-
-        createBoard();
-        startTimer();
-        document.addEventListener('keydown', handleKeyDown);
-        addControlListeners();
     </script>
 </body>
 </html>
